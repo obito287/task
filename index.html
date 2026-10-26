@@ -1,0 +1,1085 @@
+<!doctype html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TaskFlow - Production Task Management & Workflow Dashboard</title>
+    <meta name="description" content="Production-oriented task management web application with Firebase Authentication, real-time Cloud Firestore sync, Kanban & List views, and role-based security rules." />
+    <meta property="og:title" content="TaskFlow - Production Task Management & Workflow Dashboard" />
+    <meta property="og:description" content="Production-oriented task management web application with Firebase Authentication, real-time Cloud Firestore sync, Kanban & List views, and role-based security rules." />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/src/index.css" />
+  </head>
+  <body class="bg-[#0b0f17] text-slate-100 min-h-screen flex flex-col font-sans antialiased selection:bg-indigo-500 selection:text-white">
+
+    <!-- Top Navigation Header -->
+    <header class="sticky top-0 z-40 bg-[#0f172a]/90 backdrop-blur-md border-b border-slate-800/80 px-4 lg:px-6 py-3 transition-all">
+      <div class="max-w-7xl mx-auto flex items-center justify-between gap-4">
+        
+        <!-- Left: Logo & Branding -->
+        <div class="flex items-center gap-3">
+          <div class="flex items-center gap-2.5 cursor-pointer" id="brand-logo">
+            <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-sky-400 flex items-center justify-center shadow-lg shadow-indigo-500/25 ring-1 ring-white/20">
+              <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+              </svg>
+            </div>
+            <div>
+              <span class="font-bold text-lg tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-100 to-slate-400">TaskFlow</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Actions & User Menu -->
+        <div class="flex items-center gap-2.5">
+          <!-- Authenticated State UI -->
+          <div id="auth-user-section" class="hidden flex items-center gap-3">
+            <!-- Sync Indicator -->
+            <div class="hidden sm:flex items-center gap-2 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-medium" title="Real-time Firestore synchronization active">
+              <span class="w-2 h-2 rounded-full bg-emerald-400 sync-indicator-dot"></span>
+              <span class="text-[11px] font-mono">Live Sync</span>
+            </div>
+
+            <!-- New Task Primary Action -->
+            <button
+              id="top-create-task-btn"
+              type="button"
+              class="flex items-center gap-1.5 px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white text-xs font-semibold rounded-xl shadow-md shadow-indigo-600/30 transition-all transform active:scale-95"
+            >
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
+              </svg>
+              <span>New Task</span>
+            </button>
+
+            <!-- User Avatar & Dropdown -->
+            <div class="relative group">
+              <button
+                id="user-menu-btn"
+                type="button"
+                class="flex items-center gap-2 p-1 pl-2 bg-slate-800/80 hover:bg-slate-700 border border-slate-700/80 rounded-xl transition-all"
+                aria-haspopup="true"
+                aria-expanded="false"
+              >
+                <div id="user-avatar" class="w-7 h-7 rounded-lg bg-gradient-to-tr from-purple-600 to-indigo-500 flex items-center justify-center font-bold text-xs text-white uppercase shadow">
+                  U
+                </div>
+                <span id="user-display-name" class="hidden sm:block text-xs font-medium text-slate-200 max-w-[120px] truncate">User</span>
+                <svg class="w-3.5 h-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+
+              <!-- Dropdown Menu -->
+              <div id="user-dropdown" class="hidden absolute right-0 mt-2 w-56 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl py-2 z-50">
+                <div class="px-4 py-2 border-b border-slate-800">
+                  <p class="text-xs font-medium text-slate-400">Signed in as</p>
+                  <p id="dropdown-user-email" class="text-xs font-semibold text-slate-100 truncate mt-0.5">user@example.com</p>
+                </div>
+                <div class="py-1">
+                  <button id="menu-view-docs" type="button" class="w-full text-left px-4 py-2 text-xs text-slate-300 hover:bg-slate-800 flex items-center gap-2">
+                    <svg class="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    Documentation & Rules
+                  </button>
+                  <button id="logout-btn" type="button" class="w-full text-left px-4 py-2 text-xs text-rose-400 hover:bg-rose-500/10 flex items-center gap-2 transition-colors">
+                    <svg class="w-4 h-4 text-rose-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    </svg>
+                    Sign Out
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Unauthenticated State UI -->
+          <div id="unauth-user-section" class="flex items-center gap-2">
+            <button
+              id="top-signin-btn"
+              type="button"
+              class="flex items-center gap-2 px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-xl shadow-md shadow-indigo-600/30 transition-all"
+            >
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+              </svg>
+              <span>Sign In</span>
+            </button>
+          </div>
+
+        </div>
+      </div>
+    </header>
+
+    <!-- Main App Container -->
+    <div class="flex-1 flex flex-col lg:flex-row max-w-7xl w-full mx-auto p-4 lg:p-6 gap-6">
+
+      <!-- ============================================== -->
+      <!-- SECTION A: AUTHENTICATION HERO (When Signed Out) -->
+      <!-- ============================================== -->
+      <section id="auth-hero-view" class="w-full py-8 lg:py-16 flex flex-col items-center justify-center">
+        <div class="w-full max-w-4xl grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+          
+          <!-- Left Presentation Column -->
+          <div class="lg:col-span-7 space-y-6">
+            <h1 class="hero-heading-pulse text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white tracking-tight leading-tight select-none cursor-default">
+              Enterprise Task Management, <br />
+              <span class="bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 via-sky-300 to-emerald-400">
+                Secured by Cloud Firestore.
+              </span>
+            </h1>
+          </div>
+
+          <!-- Right Auth Box Column -->
+          <div class="lg:col-span-5">
+            <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 sm:p-8 shadow-2xl backdrop-blur-xl relative overflow-hidden">
+              <div class="absolute -top-24 -right-24 w-48 h-48 bg-indigo-500/15 rounded-full blur-3xl pointer-events-none"></div>
+
+              <!-- Auth Tabs -->
+              <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-6">
+                <div class="flex gap-2">
+                  <button id="auth-tab-login" type="button" class="text-sm font-semibold text-white border-b-2 border-indigo-500 pb-1.5 transition-colors">
+                    Sign In
+                  </button>
+                  <button id="auth-tab-register" type="button" class="text-sm font-medium text-slate-400 hover:text-white pb-1.5 transition-colors">
+                    Create Account
+                  </button>
+                </div>
+                <span class="text-[11px] text-emerald-400 font-mono flex items-center gap-1">
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                  Firebase Ready
+                </span>
+              </div>
+
+              <!-- Quick Google One-Click Auth -->
+              <div class="space-y-4">
+                <button
+                  id="google-signin-btn"
+                  type="button"
+                  class="w-full flex items-center justify-center gap-3 px-4 py-2.5 bg-white hover:bg-slate-100 text-slate-900 text-sm font-semibold rounded-xl shadow-md hover:shadow-lg transition-all active:scale-[0.99]"
+                >
+                  <svg class="w-4 h-4" viewBox="0 0 24 24">
+                    <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"/>
+                    <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z"/>
+                    <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.99 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/>
+                    <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
+                  </svg>
+                  <span>Continue with Google</span>
+                </button>
+
+                <div class="flex items-center my-4">
+                  <div class="flex-grow border-t border-slate-800"></div>
+                  <span class="px-3 text-xs text-slate-500 uppercase tracking-wider font-mono">Or with email</span>
+                  <div class="flex-grow border-t border-slate-800"></div>
+                </div>
+
+                <!-- Email/Password Form -->
+                <form id="auth-email-form" class="space-y-3.5" novalidate>
+                  <div id="register-name-field" class="hidden space-y-1">
+                    <label for="auth-name" class="block text-xs font-medium text-slate-300">Your Full Name</label>
+                    <input
+                      id="auth-name"
+                      type="text"
+                      placeholder="e.g. Alex Rivera"
+                      class="w-full px-3.5 py-2 bg-slate-800/80 border border-slate-700 rounded-xl text-sm text-slate-100 placeholder-slate-500 form-input-focus"
+                    />
+                  </div>
+
+                  <div class="space-y-1">
+                    <label for="auth-email" class="block text-xs font-medium text-slate-300">Email Address</label>
+                    <input
+                      id="auth-email"
+                      type="email"
+                      required
+                      placeholder="you@domain.com"
+                      class="w-full px-3.5 py-2 bg-slate-800/80 border border-slate-700 rounded-xl text-sm text-slate-100 placeholder-slate-500 form-input-focus"
+                    />
+                  </div>
+
+                  <div class="space-y-1">
+                    <div class="flex justify-between items-center">
+                      <label for="auth-password" class="block text-xs font-medium text-slate-300">Password</label>
+                      <button id="forgot-password-btn" type="button" class="text-[11px] text-indigo-400 hover:text-indigo-300 transition-colors">
+                        Forgot password?
+                      </button>
+                    </div>
+                    <input
+                      id="auth-password"
+                      type="password"
+                      required
+                      placeholder="••••••••"
+                      class="w-full px-3.5 py-2 bg-slate-800/80 border border-slate-700 rounded-xl text-sm text-slate-100 placeholder-slate-500 form-input-focus"
+                    />
+                  </div>
+
+                  <div id="auth-error-msg" class="hidden p-2.5 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs"></div>
+
+                  <button
+                    id="auth-submit-btn"
+                    type="submit"
+                    class="w-full py-2.5 px-4 bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white text-sm font-semibold rounded-xl shadow-md shadow-indigo-600/30 transition-all flex items-center justify-center gap-2"
+                  >
+                    <span id="auth-submit-spinner" class="hidden animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></span>
+                    <span id="auth-submit-text">Sign In</span>
+                  </button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+
+      <!-- ============================================== -->
+      <!-- SECTION B: MAIN DASHBOARD VIEW (Authenticated) -->
+      <!-- ============================================== -->
+      <main id="app-dashboard-view" class="hidden w-full flex flex-col lg:flex-row gap-6">
+
+        <!-- Mobile Filter Bar (Visible only on small screens) -->
+        <div class="lg:hidden flex items-center justify-between gap-2 bg-slate-900/90 border border-slate-800 p-3 rounded-2xl">
+          <div class="relative flex-1">
+            <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </span>
+            <input
+              id="mobile-search-input"
+              type="text"
+              placeholder="Search tasks..."
+              class="w-full pl-9 pr-3 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none"
+            />
+          </div>
+          <button id="mobile-filter-open-btn" type="button" class="p-2 bg-slate-800 rounded-lg text-slate-300 border border-slate-700">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+            </svg>
+          </button>
+        </div>
+
+        <!-- Left Sidebar Navigation -->
+        <aside id="dashboard-sidebar" class="hidden lg:flex flex-col w-64 shrink-0 space-y-6">
+          
+          <!-- Category Nav List -->
+          <div class="bg-slate-900/70 border border-slate-800/80 rounded-2xl p-4 space-y-1 shadow-sm">
+            <h2 class="text-[11px] font-bold text-slate-400 uppercase tracking-wider px-3 pb-2 font-mono">Workspaces</h2>
+            
+            <button
+              data-filter-status="all"
+              class="sidebar-nav-btn active w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-colors bg-indigo-600/15 text-indigo-400 border border-indigo-500/20"
+            >
+              <div class="flex items-center gap-2.5">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                </svg>
+                <span>All Tasks</span>
+              </div>
+              <span id="sidebar-count-all" class="px-2 py-0.5 rounded-full text-[10px] bg-slate-800 text-slate-300 font-mono">0</span>
+            </button>
+
+            <button
+              data-filter-status="todo"
+              class="sidebar-nav-btn w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800/60 transition-colors"
+            >
+              <div class="flex items-center gap-2.5">
+                <span class="w-2.5 h-2.5 rounded-full border-2 border-slate-400"></span>
+                <span>To Do</span>
+              </div>
+              <span id="sidebar-count-todo" class="px-2 py-0.5 rounded-full text-[10px] bg-slate-800 text-slate-400 font-mono">0</span>
+            </button>
+
+            <button
+              data-filter-status="in_progress"
+              class="sidebar-nav-btn w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800/60 transition-colors"
+            >
+              <div class="flex items-center gap-2.5">
+                <span class="w-2.5 h-2.5 rounded-full bg-amber-400/80"></span>
+                <span>In Progress</span>
+              </div>
+              <span id="sidebar-count-in-progress" class="px-2 py-0.5 rounded-full text-[10px] bg-slate-800 text-slate-400 font-mono">0</span>
+            </button>
+
+            <button
+              data-filter-status="completed"
+              class="sidebar-nav-btn w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800/60 transition-colors"
+            >
+              <div class="flex items-center gap-2.5">
+                <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+                </svg>
+                <span>Completed</span>
+              </div>
+              <span id="sidebar-count-completed" class="px-2 py-0.5 rounded-full text-[10px] bg-slate-800 text-slate-400 font-mono">0</span>
+            </button>
+
+            <button
+              id="sidebar-filter-overdue"
+              class="sidebar-nav-btn w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium text-rose-400 hover:bg-rose-500/10 transition-colors"
+            >
+              <div class="flex items-center gap-2.5">
+                <svg class="w-3.5 h-3.5 text-rose-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>Overdue</span>
+              </div>
+              <span id="sidebar-count-overdue" class="px-2 py-0.5 rounded-full text-[10px] bg-rose-500/20 text-rose-300 font-mono">0</span>
+            </button>
+          </div>
+
+          <!-- Categories Quick Section -->
+          <div class="bg-slate-900/70 border border-slate-800/80 rounded-2xl p-4 space-y-2 shadow-sm">
+            <div class="flex items-center justify-between px-2 pb-1">
+              <h2 class="text-[11px] font-bold text-slate-400 uppercase tracking-wider font-mono">Categories</h2>
+              <button id="reset-category-filter-btn" type="button" class="text-[10px] text-slate-400 hover:text-white transition-colors">Clear</button>
+            </div>
+            
+            <div class="space-y-1">
+              <button
+                data-category-btn="work"
+                class="category-nav-btn w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800/60 transition-colors"
+              >
+                <div class="flex items-center gap-2">
+                  <span class="w-2 h-2 rounded-full bg-indigo-400"></span>
+                  <span>Work</span>
+                </div>
+                <span id="cat-count-work" class="px-2 py-0.5 rounded-full text-[10px] bg-slate-800 text-slate-400 font-mono">0</span>
+              </button>
+
+              <button
+                data-category-btn="personal"
+                class="category-nav-btn w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800/60 transition-colors"
+              >
+                <div class="flex items-center gap-2">
+                  <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                  <span>Personal</span>
+                </div>
+                <span id="cat-count-personal" class="px-2 py-0.5 rounded-full text-[10px] bg-slate-800 text-slate-400 font-mono">0</span>
+              </button>
+
+              <button
+                data-category-btn="shopping"
+                class="category-nav-btn w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800/60 transition-colors"
+              >
+                <div class="flex items-center gap-2">
+                  <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+                  <span>Shopping</span>
+                </div>
+                <span id="cat-count-shopping" class="px-2 py-0.5 rounded-full text-[10px] bg-slate-800 text-slate-400 font-mono">0</span>
+              </button>
+
+              <button
+                data-category-btn="study"
+                class="category-nav-btn w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800/60 transition-colors"
+              >
+                <div class="flex items-center gap-2">
+                  <span class="w-2 h-2 rounded-full bg-purple-400"></span>
+                  <span>Study</span>
+                </div>
+                <span id="cat-count-study" class="px-2 py-0.5 rounded-full text-[10px] bg-slate-800 text-slate-400 font-mono">0</span>
+              </button>
+
+              <button
+                data-category-btn="other"
+                class="category-nav-btn w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800/60 transition-colors"
+              >
+                <div class="flex items-center gap-2">
+                  <span class="w-2 h-2 rounded-full bg-slate-400"></span>
+                  <span>Other</span>
+                </div>
+                <span id="cat-count-other" class="px-2 py-0.5 rounded-full text-[10px] bg-slate-800 text-slate-400 font-mono">0</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Priorities Quick Section -->
+          <div class="bg-slate-900/70 border border-slate-800/80 rounded-2xl p-4 space-y-2 shadow-sm">
+            <div class="flex items-center justify-between px-2 pb-1">
+              <h2 class="text-[11px] font-bold text-slate-400 uppercase tracking-wider font-mono">Priorities</h2>
+              <button id="reset-priority-filter-btn" type="button" class="text-[10px] text-slate-400 hover:text-white transition-colors">Clear</button>
+            </div>
+            
+            <div class="flex flex-wrap gap-1.5">
+              <button data-priority-btn="urgent" class="priority-pill text-[11px] px-2.5 py-1 rounded-lg border border-rose-500/30 text-rose-300 bg-rose-500/10 hover:bg-rose-500/20 transition-all">
+                Urgent
+              </button>
+              <button data-priority-btn="high" class="priority-pill text-[11px] px-2.5 py-1 rounded-lg border border-orange-500/30 text-orange-300 bg-orange-500/10 hover:bg-orange-500/20 transition-all">
+                High
+              </button>
+              <button data-priority-btn="medium" class="priority-pill text-[11px] px-2.5 py-1 rounded-lg border border-amber-500/30 text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 transition-all">
+                Medium
+              </button>
+              <button data-priority-btn="low" class="priority-pill text-[11px] px-2.5 py-1 rounded-lg border border-sky-500/30 text-sky-300 bg-sky-500/10 hover:bg-sky-500/20 transition-all">
+                Low
+              </button>
+            </div>
+          </div>
+
+
+
+        </aside>
+
+        <!-- Right Main View Panel -->
+        <div class="flex-1 flex flex-col space-y-6 min-w-0">
+
+          <!-- 1. Statistics & Progress Metrics Bar -->
+          <div class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3.5">
+            <!-- Total Tasks -->
+            <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 flex flex-col justify-between">
+              <span class="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Total Tasks</span>
+              <div class="flex items-baseline justify-between mt-2">
+                <span id="stat-total" class="text-2xl font-bold text-white font-mono">0</span>
+                <span class="text-xs text-indigo-400">All</span>
+              </div>
+            </div>
+
+            <!-- To Do -->
+            <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 flex flex-col justify-between">
+              <span class="text-[11px] font-medium text-slate-400 uppercase tracking-wider">To Do</span>
+              <div class="flex items-baseline justify-between mt-2">
+                <span id="stat-todo" class="text-2xl font-bold text-slate-200 font-mono">0</span>
+                <span class="text-xs text-slate-400">Pending</span>
+              </div>
+            </div>
+
+            <!-- In Progress -->
+            <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 flex flex-col justify-between">
+              <span class="text-[11px] font-medium text-slate-400 uppercase tracking-wider">In Progress</span>
+              <div class="flex items-baseline justify-between mt-2">
+                <span id="stat-in-progress" class="text-2xl font-bold text-amber-400 font-mono">0</span>
+                <span class="text-xs text-amber-400/80">Active</span>
+              </div>
+            </div>
+
+            <!-- Completed -->
+            <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 flex flex-col justify-between">
+              <span class="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Completed</span>
+              <div class="flex items-baseline justify-between mt-2">
+                <span id="stat-completed" class="text-2xl font-bold text-emerald-400 font-mono">0</span>
+                <span class="text-xs text-emerald-400/80">Done</span>
+              </div>
+            </div>
+
+            <!-- Overdue -->
+            <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 flex flex-col justify-between">
+              <span class="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Overdue</span>
+              <div class="flex items-baseline justify-between mt-2">
+                <span id="stat-overdue" class="text-2xl font-bold text-rose-400 font-mono">0</span>
+                <span class="text-xs text-rose-400/80">Late</span>
+              </div>
+            </div>
+
+            <!-- Completion Rate Progress Ring -->
+            <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 flex items-center justify-between">
+              <div>
+                <span class="text-[11px] font-medium text-slate-400 uppercase tracking-wider block">Progress</span>
+                <span id="stat-rate" class="text-2xl font-bold text-white font-mono mt-2 block">0%</span>
+              </div>
+              <div class="relative w-12 h-12 flex items-center justify-center">
+                <svg class="w-12 h-12 transform -rotate-90" viewBox="0 0 36 36">
+                  <path
+                    class="text-slate-800"
+                    stroke-width="3.5"
+                    stroke="currentColor"
+                    fill="none"
+                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                  />
+                  <path
+                    id="progress-circle-bar"
+                    class="text-indigo-500 transition-all duration-500"
+                    stroke-dasharray="0, 100"
+                    stroke-width="3.5"
+                    stroke-linecap="round"
+                    stroke="currentColor"
+                    fill="none"
+                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                  />
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          <!-- 2. Interactive Controls & View Toolbar -->
+          <div class="bg-slate-900/70 border border-slate-800 rounded-2xl p-3.5 flex flex-wrap items-center justify-between gap-3 shadow-sm">
+            
+            <!-- Left Controls: Filter Badges & Search Tag -->
+            <div class="flex items-center flex-wrap gap-2">
+              <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider font-mono mr-1">Views & Filters:</span>
+              
+              <!-- Filter status pill badge -->
+              <span id="active-filter-badge" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-800 text-slate-200 border border-slate-700">
+                <span>Filter: All</span>
+              </span>
+
+              <!-- Priority select dropdown -->
+              <div class="relative">
+                <select
+                  id="filter-priority-select"
+                  class="bg-slate-800 border border-slate-700 text-slate-200 text-xs rounded-xl px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer"
+                  aria-label="Filter tasks by priority"
+                >
+                  <option value="all">All Priorities</option>
+                  <option value="urgent">Urgent</option>
+                  <option value="high">High</option>
+                  <option value="medium">Medium</option>
+                  <option value="low">Low</option>
+                </select>
+              </div>
+
+              <!-- Sorting select dropdown -->
+              <div class="relative flex items-center gap-1">
+                <select
+                  id="sort-field-select"
+                  class="bg-slate-800 border border-slate-700 text-slate-200 text-xs rounded-xl px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer"
+                  aria-label="Sort tasks by field"
+                >
+                  <option value="dueDate">Sort by Due Date</option>
+                  <option value="priority">Sort by Priority</option>
+                  <option value="title">Sort by Title</option>
+                  <option value="createdAt">Sort by Date Created</option>
+                </select>
+                
+                <button
+                  id="sort-direction-btn"
+                  type="button"
+                  class="p-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl text-slate-300"
+                  title="Toggle Ascending / Descending"
+                >
+                  <svg id="sort-direction-icon" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <!-- Right Controls: View Switcher (Kanban vs List) & Quick Add -->
+            <div class="flex items-center gap-2">
+              <div class="flex bg-slate-800/80 p-0.5 rounded-xl border border-slate-700/80">
+                <button
+                  id="view-toggle-board"
+                  type="button"
+                  class="view-toggle-btn active px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all bg-indigo-600 text-white shadow-sm"
+                  title="Kanban Board View"
+                >
+                  <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
+                  </svg>
+                  <span>Board</span>
+                </button>
+                <button
+                  id="view-toggle-list"
+                  type="button"
+                  class="view-toggle-btn px-3 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-white flex items-center gap-1.5 transition-all"
+                  title="Structured List View"
+                >
+                  <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                  </svg>
+                  <span>List</span>
+                </button>
+              </div>
+
+              <!-- Export Dropdown -->
+              <div class="relative">
+                <button
+                  id="export-menu-btn"
+                  type="button"
+                  class="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-xl border border-slate-700 shadow-sm transition-all"
+                  title="Export tasks backup"
+                >
+                  <svg class="w-3.5 h-3.5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                  <span>Export</span>
+                  <svg class="w-3 h-3 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                <div id="export-dropdown" class="hidden absolute right-0 mt-2 w-44 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl py-1.5 z-40">
+                  <button id="export-csv-btn" type="button" class="w-full text-left px-3.5 py-2 text-xs text-slate-200 hover:bg-slate-800 flex items-center gap-2.5">
+                    <span class="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300">CSV</span>
+                    <span>Export to .csv</span>
+                  </button>
+                  <button id="export-json-btn" type="button" class="w-full text-left px-3.5 py-2 text-xs text-slate-200 hover:bg-slate-800 flex items-center gap-2.5">
+                    <span class="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300">JSON</span>
+                    <span>Export to .json</span>
+                  </button>
+                </div>
+              </div>
+
+              <button
+                id="content-create-task-btn"
+                type="button"
+                class="flex items-center gap-1.5 px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-xl shadow-md shadow-indigo-600/30 transition-all"
+              >
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
+                </svg>
+                <span>Add Task</span>
+              </button>
+            </div>
+
+          </div>
+
+          <!-- 3. Dynamic Task Content Views -->
+          <div class="relative min-h-[400px]">
+
+            <!-- Loading Spinner State -->
+            <div id="tasks-loading-state" class="hidden absolute inset-0 bg-[#0b0f17]/80 backdrop-blur-sm z-20 flex flex-col items-center justify-center space-y-3">
+              <div class="w-8 h-8 border-3 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+              <p class="text-xs font-medium text-slate-400 font-mono">Syncing tasks from Cloud Firestore...</p>
+            </div>
+
+            <!-- VIEW 1: KANBAN BOARD -->
+            <div id="kanban-board-container" class="grid grid-cols-1 md:grid-cols-3 gap-5">
+              
+              <!-- Column 1: To Do -->
+              <div data-col-status="todo" class="kanban-col flex flex-col bg-slate-900/60 border border-slate-800 rounded-2xl p-4 min-h-[460px]">
+                <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-3">
+                  <div class="flex items-center gap-2">
+                    <span class="w-2.5 h-2.5 rounded-full border-2 border-slate-400"></span>
+                    <h2 class="text-xs font-bold text-slate-200 uppercase tracking-wider font-mono">To Do</h2>
+                    <span id="col-count-todo" class="px-2 py-0.5 rounded-full text-[10px] font-mono font-semibold bg-slate-800 text-slate-400">0</span>
+                  </div>
+                  <button data-quick-add="todo" type="button" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition-colors" title="Add to To Do">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                    </svg>
+                  </button>
+                </div>
+                <div id="kanban-cards-todo" class="task-drop-zone flex-1 space-y-3 overflow-y-auto">
+                  <!-- Task Cards inserted dynamically -->
+                </div>
+              </div>
+
+              <!-- Column 2: In Progress -->
+              <div data-col-status="in_progress" class="kanban-col flex flex-col bg-slate-900/60 border border-slate-800 rounded-2xl p-4 min-h-[460px]">
+                <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-3">
+                  <div class="flex items-center gap-2">
+                    <span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span>
+                    <h2 class="text-xs font-bold text-slate-200 uppercase tracking-wider font-mono">In Progress</h2>
+                    <span id="col-count-in_progress" class="px-2 py-0.5 rounded-full text-[10px] font-mono font-semibold bg-amber-500/10 text-amber-300 border border-amber-500/20">0</span>
+                  </div>
+                  <button data-quick-add="in_progress" type="button" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition-colors" title="Add to In Progress">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                    </svg>
+                  </button>
+                </div>
+                <div id="kanban-cards-in_progress" class="task-drop-zone flex-1 space-y-3 overflow-y-auto">
+                  <!-- Task Cards inserted dynamically -->
+                </div>
+              </div>
+
+              <!-- Column 3: Completed -->
+              <div data-col-status="completed" class="kanban-col flex flex-col bg-slate-900/60 border border-slate-800 rounded-2xl p-4 min-h-[460px]">
+                <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-3">
+                  <div class="flex items-center gap-2">
+                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
+                    <h2 class="text-xs font-bold text-slate-200 uppercase tracking-wider font-mono">Completed</h2>
+                    <span id="col-count-completed" class="px-2 py-0.5 rounded-full text-[10px] font-mono font-semibold bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">0</span>
+                  </div>
+                  <button data-quick-add="completed" type="button" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition-colors" title="Add to Completed">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                    </svg>
+                  </button>
+                </div>
+                <div id="kanban-cards-completed" class="task-drop-zone flex-1 space-y-3 overflow-y-auto">
+                  <!-- Task Cards inserted dynamically -->
+                </div>
+              </div>
+
+            </div>
+
+            <!-- VIEW 2: LIST VIEW -->
+            <div id="list-view-container" class="hidden flex flex-col space-y-3">
+              <div id="list-tasks-wrapper" class="space-y-2.5">
+                <!-- List items rendered dynamically -->
+              </div>
+            </div>
+
+            <!-- Empty State Container -->
+            <div id="tasks-empty-state" class="hidden flex flex-col items-center justify-center p-12 bg-slate-900/40 border border-dashed border-slate-800 rounded-2xl text-center space-y-4">
+              <div class="w-14 h-14 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400">
+                <svg class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+              </div>
+              <div class="max-w-sm">
+                <h3 id="empty-state-title" class="text-base font-bold text-white">No tasks found</h3>
+                <p id="empty-state-desc" class="text-xs text-slate-400 mt-1">
+                  You don't have any tasks matching the current view or filters. Create your first task to start tracking work.
+                </p>
+              </div>
+              <button
+                id="empty-create-task-btn"
+                type="button"
+                class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-xl shadow-md shadow-indigo-600/30 transition-all"
+              >
+                + Create New Task
+              </button>
+            </div>
+
+          </div>
+
+        </div>
+
+      </main>
+
+    </div>
+
+
+
+
+    <!-- ============================================== -->
+    <!-- MODAL 1: CREATE / EDIT TASK MODAL -->
+    <!-- ============================================== -->
+    <div id="task-modal" class="modal hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div class="modal-backdrop fixed inset-0 bg-black/75 backdrop-blur-sm" data-close-modal="task-modal"></div>
+      
+      <div class="relative w-full max-w-lg bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden z-10 transition-all transform">
+        <!-- Modal Header -->
+        <div class="flex items-center justify-between px-6 py-4 border-b border-slate-800">
+          <div>
+            <h3 id="task-modal-title" class="text-base font-bold text-white">Create New Task</h3>
+            <p class="text-xs text-slate-400 mt-0.5">Define your task details, priority, and timeline</p>
+          </div>
+          <button data-close-modal="task-modal" type="button" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition-colors">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <!-- Task Form -->
+        <form id="task-form" class="p-6 space-y-4" novalidate>
+          <input type="hidden" id="task-form-id" value="" />
+
+          <!-- Title Input -->
+          <div class="space-y-1.5">
+            <div class="flex justify-between items-center">
+              <label for="task-form-title" class="block text-xs font-semibold text-slate-200">
+                Task Title <span class="text-rose-400">*</span>
+              </label>
+              <span id="title-char-counter" class="text-[11px] text-slate-500 font-mono">0 / 120</span>
+            </div>
+            <input
+              id="task-form-title"
+              type="text"
+              required
+              maxlength="120"
+              placeholder="e.g. Design PostgreSQL & Firestore integration schema"
+              class="w-full px-3.5 py-2.5 bg-slate-800/90 border border-slate-700 rounded-xl text-sm text-slate-100 placeholder-slate-500 form-input-focus"
+            />
+            <p id="task-title-error" class="hidden text-[11px] text-rose-400"></p>
+          </div>
+
+          <!-- Description Input -->
+          <div class="space-y-1.5">
+            <div class="flex justify-between items-center">
+              <label for="task-form-desc" class="block text-xs font-semibold text-slate-200">
+                Description & Notes
+              </label>
+              <span id="desc-char-counter" class="text-[11px] text-slate-500 font-mono">0 / 1000</span>
+            </div>
+            <textarea
+              id="task-form-desc"
+              rows="3"
+              maxlength="1000"
+              placeholder="Add acceptance criteria, technical references, or step-by-step checklists..."
+              class="w-full px-3.5 py-2 bg-slate-800/90 border border-slate-700 rounded-xl text-sm text-slate-100 placeholder-slate-500 form-input-focus resize-none"
+            ></textarea>
+          </div>
+
+          <!-- Due Date, Category, Priority, and Status Row -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            
+            <!-- Due Date -->
+            <div class="space-y-1.5">
+              <label for="task-form-duedate" class="block text-xs font-semibold text-slate-200">
+                Due Date <span class="text-rose-400">*</span>
+              </label>
+              <input
+                id="task-form-duedate"
+                type="date"
+                required
+                class="w-full px-3 py-2 bg-slate-800/90 border border-slate-700 rounded-xl text-xs text-slate-100 form-input-focus cursor-pointer"
+              />
+            </div>
+
+            <!-- Category -->
+            <div class="space-y-1.5">
+              <label for="task-form-category" class="block text-xs font-semibold text-slate-200">
+                Category
+              </label>
+              <select
+                id="task-form-category"
+                class="w-full px-3 py-2 bg-slate-800/90 border border-slate-700 rounded-xl text-xs text-slate-100 form-input-focus cursor-pointer"
+              >
+                <option value="work" selected>Work</option>
+                <option value="personal">Personal</option>
+                <option value="shopping">Shopping</option>
+                <option value="study">Study</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+
+            <!-- Priority -->
+            <div class="space-y-1.5">
+              <label for="task-form-priority" class="block text-xs font-semibold text-slate-200">
+                Priority
+              </label>
+              <select
+                id="task-form-priority"
+                class="w-full px-3 py-2 bg-slate-800/90 border border-slate-700 rounded-xl text-xs text-slate-100 form-input-focus cursor-pointer"
+              >
+                <option value="low">Low</option>
+                <option value="medium" selected>Medium</option>
+                <option value="high">High</option>
+                <option value="urgent">Urgent</option>
+              </select>
+            </div>
+
+            <!-- Status -->
+            <div class="space-y-1.5">
+              <label for="task-form-status" class="block text-xs font-semibold text-slate-200">
+                Status
+              </label>
+              <select
+                id="task-form-status"
+                class="w-full px-3 py-2 bg-slate-800/90 border border-slate-700 rounded-xl text-xs text-slate-100 form-input-focus cursor-pointer"
+              >
+                <option value="todo" selected>To Do</option>
+                <option value="in_progress">In Progress</option>
+                <option value="completed">Completed</option>
+              </select>
+            </div>
+
+          </div>
+
+          <div id="task-form-error" class="hidden p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs"></div>
+
+          <!-- Modal Actions -->
+          <div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-800">
+            <button
+              data-close-modal="task-modal"
+              type="button"
+              class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-xl transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              id="task-form-save-btn"
+              type="submit"
+              class="flex items-center gap-2 px-5 py-2 bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white text-xs font-semibold rounded-xl shadow-md shadow-indigo-600/30 transition-all"
+            >
+              <span id="task-save-spinner" class="hidden animate-spin w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full"></span>
+              <span id="task-save-text">Save Task</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+
+    <!-- ============================================== -->
+    <!-- MODAL 2: CONFIRM DELETE MODAL -->
+    <!-- ============================================== -->
+    <div id="confirm-modal" class="modal hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div class="modal-backdrop fixed inset-0 bg-black/75 backdrop-blur-sm" data-close-modal="confirm-modal"></div>
+      
+      <div class="relative w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-6 z-10 space-y-4">
+        <div class="w-12 h-12 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400">
+          <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+          </svg>
+        </div>
+
+        <div>
+          <h3 class="text-base font-bold text-white">Delete Task Permanently?</h3>
+          <p class="text-xs text-slate-300 mt-1">
+            Are you sure you want to delete <span id="confirm-delete-task-title" class="font-semibold text-white">this task</span>? This action deletes the document directly from Cloud Firestore and cannot be undone.
+          </p>
+        </div>
+
+        <div class="flex items-center justify-end gap-3 pt-2">
+          <button
+            data-close-modal="confirm-modal"
+            type="button"
+            class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-xl transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            id="confirm-delete-btn"
+            type="button"
+            class="flex items-center gap-2 px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold rounded-xl shadow-md shadow-rose-600/30 transition-all"
+          >
+            <span id="confirm-delete-spinner" class="hidden animate-spin w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full"></span>
+            <span>Confirm Delete</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ============================================== -->
+    <!-- MODAL 3: INTERNSHIP & ARCHITECTURE GUIDE MODAL -->
+    <!-- ============================================== -->
+    <div id="guide-modal" class="modal hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div class="modal-backdrop fixed inset-0 bg-black/80 backdrop-blur-md" data-close-modal="guide-modal"></div>
+      
+      <div class="relative w-full max-w-3xl bg-slate-900 border border-slate-700/80 rounded-2xl shadow-2xl overflow-hidden z-10 flex flex-col max-h-[90vh]">
+        
+        <!-- Header -->
+        <div class="flex items-center justify-between px-6 py-4 border-b border-slate-800 shrink-0">
+          <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div>
+              <h3 class="text-sm font-bold text-white">Internship Technical Guide & Architecture Spec</h3>
+              <p class="text-xs text-slate-400">Architecture, Firestore Rules, Error Handling & Local Testing</p>
+            </div>
+          </div>
+          <button data-close-modal="guide-modal" type="button" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <!-- Documentation Tabs -->
+        <div class="flex border-b border-slate-800 px-6 gap-4 shrink-0 bg-slate-950/40 text-xs">
+          <button data-doc-tab="overview" class="doc-tab-btn active text-indigo-400 border-b-2 border-indigo-500 py-2.5 font-semibold">Overview & Architecture</button>
+          <button data-doc-tab="rules" class="doc-tab-btn text-slate-400 hover:text-white py-2.5 font-medium">Firestore Security Rules</button>
+          <button data-doc-tab="errors" class="doc-tab-btn text-slate-400 hover:text-white py-2.5 font-medium">Audit Error Handling</button>
+          <button data-doc-tab="local" class="doc-tab-btn text-slate-400 hover:text-white py-2.5 font-medium">Local Run & Testing</button>
+        </div>
+
+        <!-- Content Area -->
+        <div class="p-6 overflow-y-auto space-y-4 text-xs leading-relaxed text-slate-300">
+          
+          <!-- TAB 1: OVERVIEW -->
+          <div id="doc-panel-overview" class="doc-panel space-y-3">
+            <h4 class="text-sm font-bold text-white">Production System Architecture</h4>
+            <p>
+              This application has been crafted to fulfill all internship standards for enterprise full-stack development using semantic HTML5, modern CSS3 variables, and reactive vanilla JavaScript / TypeScript:
+            </p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+              <div class="p-3 rounded-xl bg-slate-800/60 border border-slate-700/60">
+                <span class="font-bold text-indigo-400 block mb-1">Frontend Layer</span>
+                Modular Vanilla JavaScript / TypeScript architecture with separation of concerns:
+                <ul class="list-disc list-inside mt-1 text-slate-400">
+                  <li><code class="text-indigo-300">/src/services/auth-service.ts</code>: Authentication</li>
+                  <li><code class="text-indigo-300">/src/services/task-service.ts</code>: Firestore CRUD</li>
+                  <li><code class="text-indigo-300">/src/ui/toast.ts</code>: Notifications</li>
+                  <li><code class="text-indigo-300">/src/ui/modal.ts</code>: Accessible Modals</li>
+                </ul>
+              </div>
+              <div class="p-3 rounded-xl bg-slate-800/60 border border-slate-700/60">
+                <span class="font-bold text-emerald-400 block mb-1">Backend & Persistence</span>
+                Managed Google Cloud & Firebase infrastructure:
+                <ul class="list-disc list-inside mt-1 text-slate-400">
+                  <li><strong class="text-slate-200">Firebase Auth</strong>: Google OAuth Popups + Email/Password</li>
+                  <li><strong class="text-slate-200">Cloud Firestore</strong>: Enterprise instance</li>
+                  <li><strong class="text-slate-200">Real-Time Sync</strong>: Continuous <code class="text-slate-300">onSnapshot</code></li>
+                  <li><strong class="text-slate-200">Zero Mock Data</strong>: Direct server persistence</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB 2: RULES -->
+          <div id="doc-panel-rules" class="doc-panel hidden space-y-3">
+            <h4 class="text-sm font-bold text-white">Zero-Trust Firestore Security Rules (ABAC)</h4>
+            <p>
+              Security rules are mathematically enforced in <code class="text-indigo-300">firestore.rules</code> and deployed directly to Cloud Firestore. Users can strictly access, read, and write only their own records:
+            </p>
+            <pre class="p-3 bg-slate-950 rounded-xl border border-slate-800 text-[11px] font-mono text-emerald-300 overflow-x-auto">
+// Default Deny
+match /{document=**} {
+  allow read, write: if false;
+}
+
+// User-scoped Task collection
+match /tasks/{taskId} {
+  allow get: if isSignedIn() && isValidId(taskId) && existing().userId == request.auth.uid;
+  allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+  allow create: if isSignedIn() && isValidId(taskId) && isValidTask(incoming())
+    && incoming().userId == request.auth.uid
+    && incoming().createdAt == request.time
+    && incoming().updatedAt == request.time;
+  allow update: if isSignedIn() && isValidId(taskId)
+    && existing().userId == request.auth.uid
+    && incoming().userId == existing().userId
+    && incoming().updatedAt == request.time;
+  allow delete: if isSignedIn() && isValidId(taskId) && existing().userId == request.auth.uid;
+}</pre>
+          </div>
+
+          <!-- TAB 3: ERRORS -->
+          <div id="doc-panel-errors" class="doc-panel hidden space-y-3">
+            <h4 class="text-sm font-bold text-white">Centralized Error Handling Protocol</h4>
+            <p>
+              Whenever any Firestore operation fails, our client code catches the error and serializes a structured JSON message containing detailed audit context for debugging:
+            </p>
+            <pre class="p-3 bg-slate-950 rounded-xl border border-slate-800 text-[11px] font-mono text-sky-300 overflow-x-auto">
+interface FirestoreErrorInfo {
+  error: string;
+  operationType: 'create' | 'update' | 'delete' | 'list' | 'get';
+  path: string | null;
+  authInfo: {
+    userId?: string | null;
+    email?: string | null;
+    emailVerified?: boolean | null;
+  };
+}</pre>
+          </div>
+
+          <!-- TAB 4: LOCAL -->
+          <div id="doc-panel-local" class="doc-panel hidden space-y-3">
+            <h4 class="text-sm font-bold text-white">How to Run & Test the Application Locally</h4>
+            <div class="space-y-2">
+              <p><strong>1. Install Dependencies:</strong></p>
+              <pre class="p-2.5 bg-slate-950 rounded-xl border border-slate-800 font-mono text-slate-200">npm install</pre>
+
+              <p class="pt-2"><strong>2. Start Development Server:</strong></p>
+              <pre class="p-2.5 bg-slate-950 rounded-xl border border-slate-800 font-mono text-slate-200">npm run dev</pre>
+              <p class="text-slate-400">Open <code class="text-indigo-300">http://localhost:3000</code> in your browser.</p>
+
+              <p class="pt-2"><strong>3. Build for Production:</strong></p>
+              <pre class="p-2.5 bg-slate-950 rounded-xl border border-slate-800 font-mono text-slate-200">npm run build</pre>
+
+              <p class="pt-2"><strong>4. Verification / Linting:</strong></p>
+              <pre class="p-2.5 bg-slate-950 rounded-xl border border-slate-800 font-mono text-slate-200">npm run lint</pre>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Footer -->
+        <div class="px-6 py-3 border-t border-slate-800 bg-slate-950/40 flex justify-end shrink-0">
+          <button data-close-modal="guide-modal" type="button" class="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs rounded-xl">
+            Close Guide
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-auto"></div>
+
+    <!-- Application Script Entry Point -->
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

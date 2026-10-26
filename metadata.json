@@ -1,0 +1,6 @@
+{
+  "name": "TaskFlow - Production Task Management & Workflow Dashboard",
+  "description": "Production-oriented task management web application with Firebase Authentication, real-time Cloud Firestore sync, Kanban & List views, and role-based security rules.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

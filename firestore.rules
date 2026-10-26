@@ -1,0 +1,72 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Default deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isValidTask(data) {
+      return data.title is string &&
+        data.title.size() >= 1 &&
+        data.title.size() <= 120 &&
+        (!('description' in data) || (data.description is string && data.description.size() <= 1000)) &&
+        (!('category' in data) || (data.category is string && data.category in ['work', 'personal', 'shopping', 'study', 'other'])) &&
+        data.status in ['todo', 'in_progress', 'completed'] &&
+        data.priority in ['low', 'medium', 'high', 'urgent'] &&
+        data.dueDate is string &&
+        data.dueDate.size() <= 20 &&
+        data.userId is string &&
+        data.userId.size() <= 128 &&
+        data.userId == request.auth.uid;
+    }
+
+    match /tasks/{taskId} {
+      // Owner can get their own task
+      allow get: if isSignedIn() && isValidId(taskId) && existing().userId == request.auth.uid;
+
+      // Secure list: query must be scoped to the authenticated user's tasks
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+
+      // Create: strictly validated schema, strict keys, owner match, server timestamp
+      allow create: if isSignedIn() &&
+        isValidId(taskId) &&
+        isValidTask(incoming()) &&
+        incoming().userId == request.auth.uid &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time &&
+        incoming().keys().hasAll(['title', 'status', 'priority', 'dueDate', 'userId', 'createdAt', 'updatedAt']) &&
+        incoming().keys().hasOnly(['title', 'description', 'category', 'status', 'priority', 'dueDate', 'userId', 'createdAt', 'updatedAt']);
+
+      // Update: strictly validated, owner match, immutable ownership and creation date, updatedAt refreshed
+      allow update: if isSignedIn() &&
+        isValidId(taskId) &&
+        existing().userId == request.auth.uid &&
+        isValidTask(incoming()) &&
+        incoming().userId == existing().userId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time &&
+        incoming().diff(existing()).affectedKeys().hasOnly(['title', 'description', 'category', 'status', 'priority', 'dueDate', 'updatedAt']);
+
+      // Delete: only owner can delete
+      allow delete: if isSignedIn() && isValidId(taskId) && existing().userId == request.auth.uid;
+    }
+  }
+}

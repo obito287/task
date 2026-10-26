@@ -1,0 +1,88 @@
+{
+  "entities": {
+    "Task": {
+      "title": "Task",
+      "description": "Represents a user task item with status, priority, category, and schedule details",
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120,
+          "description": "Title of the task"
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 1000,
+          "description": "Detailed notes or requirements for the task"
+        },
+        "category": {
+          "type": "string",
+          "enum": [
+            "work",
+            "personal",
+            "shopping",
+            "study",
+            "other"
+          ],
+          "maxLength": 32,
+          "description": "Category or domain classification of the task"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "todo",
+            "in_progress",
+            "completed"
+          ],
+          "description": "Lifecycle state of the task"
+        },
+        "priority": {
+          "type": "string",
+          "enum": [
+            "low",
+            "medium",
+            "high",
+            "urgent"
+          ],
+          "description": "Priority tier of the task"
+        },
+        "dueDate": {
+          "type": "string",
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+          "maxLength": 20,
+          "description": "Target completion date in YYYY-MM-DD format"
+        },
+        "userId": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "maxLength": 128,
+          "description": "Firebase Auth UID of the owner"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Server timestamp when the task was created"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Server timestamp when the task was last modified"
+        }
+      },
+      "required": [
+        "title",
+        "status",
+        "priority",
+        "dueDate",
+        "userId",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/tasks/{taskId}": {
+      "schema": "Task",
+      "description": "Private collection of tasks scoped to the owning authenticated user"
+    }
+  }
+}
