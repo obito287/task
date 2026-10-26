@@ -3,12 +3,14 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>TaskFlow - Production Task Management & Workflow Dashboard</title>
+    <title >TaskFlow - Production Task Management & Workflow Dashboard</title>
     <meta name="description" content="Production-oriented task management web application with Firebase Authentication, real-time Cloud Firestore sync, Kanban & List views, and role-based security rules." />
     <meta property="og:title" content="TaskFlow - Production Task Management & Workflow Dashboard" />
     <meta property="og:description" content="Production-oriented task management web application with Firebase Authentication, real-time Cloud Firestore sync, Kanban & List views, and role-based security rules." />
     <meta property="og:type" content="website" />
-    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="apple-touch-icon" href="/favicon.png" />
+    <meta property="og:image" content="/favicon.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -23,13 +25,13 @@
         <!-- Left: Logo & Branding -->
         <div class="flex items-center gap-3">
           <div class="flex items-center gap-2.5 cursor-pointer" id="brand-logo">
-            <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-sky-400 flex items-center justify-center shadow-lg shadow-indigo-500/25 ring-1 ring-white/20">
-              <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-              </svg>
-            </div>
+            <img
+              src="/favicon.png"
+              alt="TaskManager Favicon Icon"
+              class="w-9 h-9 rounded-xl object-cover shadow-lg shadow-indigo-500/25 ring-1 ring-indigo-500/30 hover:scale-105 transition-transform"
+            />
             <div>
-              <span class="font-bold text-lg tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-100 to-slate-400">TaskFlow</span>
+              <span class="font-bold text-lg tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-100 to-slate-400">TaskManager</span>
             </div>
           </div>
         </div>
